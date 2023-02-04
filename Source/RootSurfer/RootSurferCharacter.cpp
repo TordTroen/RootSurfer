@@ -57,11 +57,12 @@ void ARootSurferCharacter::BeginPlay()
 void ARootSurferCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (GetVelocity().Length() > SMALL_NUMBER)
+	//if (GetVelocity().Length() > SMALL_NUMBER)
 	{
 		//FirstPersonCameraComponent->SetFieldOfView(120.0f);
-		double NewFov = FMath::Abs(GetVelocity().Size()) / m_SpeedToFovRatio;
-		NewFov = FMath::Clamp(NewFov, 80.0f, 140.0f);
+		double TargetFov = FMath::Abs(GetVelocity().Size()) / m_SpeedToFovRatio;
+		double NewFov = FMath::Lerp(FirstPersonCameraComponent->FieldOfView, TargetFov, m_FovChangeSpeed);
+		NewFov = FMath::Clamp(NewFov, m_MinFov, m_MaxFov);
 		FirstPersonCameraComponent->SetFieldOfView(NewFov);
 		//UE_LOG(LogTemp, Display, TEXT("mag=%s, newFov=%f, Vel=%s, velForward=%s"), *FString::SanitizeFloat(GetVelocity().Length()), NewFov , *GetCharacterMovement()->GetLastUpdateVelocity().ToString(), *GetVelocity().ToString());
 		//UE_LOG(LogTemp, Display, TEXT("Vel=%s, velForward=%s, mag=%d, newFov=%d"), *GetCharacterMovement()->GetLastUpdateVelocity().ToString(), *GetVelocity().ToString(), GetVelocity().Length(), NewFov);

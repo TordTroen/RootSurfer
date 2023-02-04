@@ -69,8 +69,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Weapon)
 	bool GetHasRifle();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Surf")
+	UPROPERTY(EditDefaultsOnly, Category = "Surf")
 	double m_SpeedToFovRatio = 16.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Surf")
+	double m_MaxFov = 120.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Surf")
+	double m_MinFov = 80.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Surf")
+	double m_FovChangeSpeed = 50.f;
 
 protected:
 	/** Called for movement input */
