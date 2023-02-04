@@ -90,11 +90,20 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Surf")
 	double m_GrappleForce = 10000.0f;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Surf")
+	double m_TraceStartOffset = 90.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Surf")
+	TSubclassOf<USceneComponent> m_GrappleHitComponentClass;
+
 private:
 	// Divide current speed by this to get the fov we want
 	double m_SpeedToFovRatio = 16.f;
 
 	FHitResult m_GrappleHit;
+
+	void UpdateGrapple();
+	void StopGrapple();
 protected:
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
