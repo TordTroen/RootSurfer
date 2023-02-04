@@ -57,9 +57,15 @@ void ARootSurferCharacter::BeginPlay()
 void ARootSurferCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	//FirstPersonCameraComponent->SetFieldOfView(120.0f);
-	float NewFov = FMath::Abs(GetVelocity().Size()) * 0.1f;
-	UE_LOG(LogTemp, Display, TEXT("Vel=%s, velForward=%s, mag=%d, newFov=%d"), *GetCharacterMovement()->GetLastUpdateVelocity().ToString(), *GetVelocity().ToString(), GetVelocity().Length(), NewFov);
+	if (GetVelocity().Length() > SMALL_NUMBER)
+	{
+		//FirstPersonCameraComponent->SetFieldOfView(120.0f);
+		double NewFov = FMath::Abs(GetVelocity().Size()) / m_SpeedToFovRatio;
+		NewFov = FMath::Clamp(NewFov, 80.0f, 140.0f);
+		FirstPersonCameraComponent->SetFieldOfView(NewFov);
+		//UE_LOG(LogTemp, Display, TEXT("mag=%s, newFov=%f, Vel=%s, velForward=%s"), *FString::SanitizeFloat(GetVelocity().Length()), NewFov , *GetCharacterMovement()->GetLastUpdateVelocity().ToString(), *GetVelocity().ToString());
+		//UE_LOG(LogTemp, Display, TEXT("Vel=%s, velForward=%s, mag=%d, newFov=%d"), *GetCharacterMovement()->GetLastUpdateVelocity().ToString(), *GetVelocity().ToString(), GetVelocity().Length(), NewFov);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////// Input
@@ -115,12 +121,12 @@ void ARootSurferCharacter::OnPressCrouch()
 	if (bIsCrouched)
 	{
 		UnCrouch();
-		FirstPersonCameraComponent->SetFieldOfView(90.0f);
+		//FirstPersonCameraComponent->SetFieldOfView(90.0f);
 	}
 	else
 	{
 		Crouch();
-		FirstPersonCameraComponent->SetFieldOfView(120.0f);
+		//FirstPersonCameraComponent->SetFieldOfView(120.0f);
 		//CharacterMovement->GroundFriction = 0.1f;
 	}
 }
