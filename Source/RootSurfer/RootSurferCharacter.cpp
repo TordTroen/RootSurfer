@@ -190,7 +190,25 @@ void ARootSurferCharacter::DoPrimaryAction()
 	}
 	else
 	{
-		StopGrapple();
+		const float Radius = 100.0f;
+		
+		static const FName GrappleSphereTrace(TEXT("Grapple_ForgivingTrace"));
+		FCollisionQueryParams Params(GrappleSphereTrace, false, GetOwner());
+		Params.AddIgnoredActor(GetOwner());
+		const bool bForgivingBlockingHit = GetWorld()->SweepSingleByChannel(Hit, TraceStart, TraceEnd, FQuat::Identity, ECollisionChannel::ECC_WorldStatic, FCollisionShape::MakeSphere(Radius), Params);
+		if (bForgivingBlockingHit)
+		{
+			DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 32.0f, 32, FColor::Red, true, 2.0f);
+
+			UpdateGrapple();
+
+			m_GrappleHit = Hit;
+			m_CableComponent->SetVisibility(true);
+		}
+		else
+		{
+			StopGrapple();
+		}
 	}
 }
 
