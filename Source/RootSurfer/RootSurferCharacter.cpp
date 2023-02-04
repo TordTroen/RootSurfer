@@ -7,6 +7,7 @@
 #include "Components/CapsuleComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "SurfMovementComponent.h"
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -53,6 +54,14 @@ void ARootSurferCharacter::BeginPlay()
 
 }
 
+void ARootSurferCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	//FirstPersonCameraComponent->SetFieldOfView(120.0f);
+	float NewFov = FMath::Abs(GetVelocity().Size()) * 0.1f;
+	UE_LOG(LogTemp, Display, TEXT("Vel=%s, velForward=%s, mag=%d, newFov=%d"), *GetCharacterMovement()->GetLastUpdateVelocity().ToString(), *GetVelocity().ToString(), GetVelocity().Length(), NewFov);
+}
+
 //////////////////////////////////////////////////////////////////////////// Input
 
 void ARootSurferCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -63,6 +72,7 @@ void ARootSurferCharacter::SetupPlayerInputComponent(class UInputComponent* Play
 		//Jumping
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ARootSurferCharacter::OnPressCrouch);
 
 		//Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ARootSurferCharacter::Move);
@@ -71,7 +81,6 @@ void ARootSurferCharacter::SetupPlayerInputComponent(class UInputComponent* Play
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ARootSurferCharacter::Look);
 	}
 }
-
 
 void ARootSurferCharacter::Move(const FInputActionValue& Value)
 {
@@ -97,6 +106,29 @@ void ARootSurferCharacter::Look(const FInputActionValue& Value)
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+}
+
+void ARootSurferCharacter::OnPressCrouch()
+{
+	USurfMovementComponent* SurfComp = Cast<USurfMovementComponent>(GetCharacterMovement());
+	SurfComp->ToggleCrouch(!bIsCrouched);
+	if (bIsCrouched)
+	{
+		UnCrouch();
+		FirstPersonCameraComponent->SetFieldOfView(90.0f);
+	}
+	else
+	{
+		Crouch();
+		FirstPersonCameraComponent->SetFieldOfView(120.0f);
+		//CharacterMovement->GroundFriction = 0.1f;
+	}
+}
+
+void ARootSurferCharacter::Jump()
+{
+	Super::Jump();
+	UnCrouch();
 }
 
 void ARootSurferCharacter::SetHasRifle(bool bNewHasRifle)

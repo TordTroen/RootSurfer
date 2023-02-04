@@ -39,15 +39,20 @@ class ARootSurferCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	class UInputAction* MoveAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* CrouchAction;
 	
+
 public:
 	ARootSurferCharacter();
 
 protected:
 	virtual void BeginPlay();
+	virtual void Tick(float DeltaTime) override;
 
 public:
-		
+	virtual void Jump() override;
+
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;
@@ -70,6 +75,8 @@ protected:
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
+
+	void OnPressCrouch();
 
 protected:
 	// APawn interface
