@@ -57,6 +57,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* PrimaryAction;
+
 	/** Bool for AnimBP to switch to another animation set */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon)
 	bool bHasRifle;
@@ -81,9 +84,17 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Surf")
 	double m_LateralMovementSpeedModifier = 0.8f;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Surf")
+	double m_PrimaryActionRange = 10000.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Surf")
+	double m_GrappleForce = 10000.0f;
+
 private:
 	// Divide current speed by this to get the fov we want
 	double m_SpeedToFovRatio = 16.f;
+
+	FHitResult m_GrappleHit;
 protected:
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
@@ -93,6 +104,9 @@ protected:
 
 	void OnPressCrouch();
 	void StopCrouching();
+
+	void DoPrimaryAction();
+	void StopPrimaryAction();
 
 protected:
 	// APawn interface
@@ -105,6 +119,7 @@ public:
 	/** Returns FirstPersonCameraComponent subobject **/
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
-
+	UPROPERTY(EditDefaultsOnly, Category = "Surf")
+	class UCableComponent* m_CableComponent;
 };
 

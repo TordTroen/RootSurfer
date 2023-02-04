@@ -8,6 +8,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "SurfMovementComponent.h"
+#include "CableComponent.h"
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -36,6 +37,7 @@ ARootSurferCharacter::ARootSurferCharacter()
 	//Mesh1P->SetRelativeRotation(FRotator(0.9f, -19.19f, 5.2f));
 	Mesh1P->SetRelativeLocation(FVector(-30.f, 0.f, -150.f));
 
+	//m_CableComponent = CreateDefaultSubobject<UCableComponent>(TEXT("Grapple"));
 }
 
 void ARootSurferCharacter::BeginPlay()
@@ -58,15 +60,20 @@ void ARootSurferCharacter::BeginPlay()
 void ARootSurferCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	//if (GetVelocity().Length() > SMALL_NUMBER)
+
+	// Fov changer
+	double TargetFov = FMath::Abs(GetVelocity().Size()) / m_SpeedToFovRatio;
+	double NewFov = FMath::Lerp(FirstPersonCameraComponent->FieldOfView, TargetFov, m_FovChangeSpeed);
+	NewFov = FMath::Clamp(NewFov, m_MinFov, m_MaxFov);
+	FirstPersonCameraComponent->SetFieldOfView(NewFov);
+
+	// Grapple movement
+	if (m_GrappleHit.IsValidBlockingHit())
 	{
-		//FirstPersonCameraComponent->SetFieldOfView(120.0f);
-		double TargetFov = FMath::Abs(GetVelocity().Size()) / m_SpeedToFovRatio;
-		double NewFov = FMath::Lerp(FirstPersonCameraComponent->FieldOfView, TargetFov, m_FovChangeSpeed);
-		NewFov = FMath::Clamp(NewFov, m_MinFov, m_MaxFov);
-		FirstPersonCameraComponent->SetFieldOfView(NewFov);
-		//UE_LOG(LogTemp, Display, TEXT("mag=%s, newFov=%f, Vel=%s, velForward=%s"), *FString::SanitizeFloat(GetVelocity().Length()), NewFov , *GetCharacterMovement()->GetLastUpdateVelocity().ToString(), *GetVelocity().ToString());
-		//UE_LOG(LogTemp, Display, TEXT("Vel=%s, velForward=%s, mag=%d, newFov=%d"), *GetCharacterMovement()->GetLastUpdateVelocity().ToString(), *GetVelocity().ToString(), GetVelocity().Length(), NewFov);
+		FVector Direction = (m_GrappleHit.ImpactPoint - GetActorLocation());
+		Direction.Normalize();
+		const FVector GrappleForce = Direction * DeltaTime * m_GrappleForce;
+		GetCharacterMovement()->AddForce(GrappleForce);
 	}
 }
 
@@ -88,6 +95,9 @@ void ARootSurferCharacter::SetupPlayerInputComponent(class UInputComponent* Play
 
 		//Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ARootSurferCharacter::Look);
+
+		EnhancedInputComponent->BindAction(PrimaryAction, ETriggerEvent::Started, this, &ARootSurferCharacter::DoPrimaryAction);
+		EnhancedInputComponent->BindAction(PrimaryAction, ETriggerEvent::Completed, this, &ARootSurferCharacter::StopPrimaryAction);
 	}
 }
 
@@ -117,18 +127,15 @@ void ARootSurferCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
-#pragma optimize("", off)
 void ARootSurferCharacter::OnPressCrouch()
 {
 	auto* CHarMove = GetCharacterMovement();
 	if (USurfMovementComponent* SurfComp = Cast<USurfMovementComponent>(GetCharacterMovement()))
 	{
-		//const bool bAlreadyCrouched = bIsCrouched;
 		SurfComp->ToggleCrouch(true);
 		Crouch();
 	}
 }
-#pragma optimize("", on)
 
 void ARootSurferCharacter::StopCrouching()
 {
@@ -142,8 +149,35 @@ void ARootSurferCharacter::StopCrouching()
 void ARootSurferCharacter::Jump()
 {
 	Super::Jump();
-	//UE_LOG(LogTemp, Display, TEXT("Jump!!"));
 	UnCrouch();
+}
+
+void ARootSurferCharacter::DoPrimaryAction()
+{
+	FHitResult Hit;
+	const FVector StartOffset = GetFirstPersonCameraComponent()->GetForwardVector() * 80.0f;
+	const FVector TraceStart = GetFirstPersonCameraComponent()->GetComponentLocation() + StartOffset;
+	const FVector TraceEnd = GetFirstPersonCameraComponent()->GetComponentLocation() + GetFirstPersonCameraComponent()->GetForwardVector() * m_PrimaryActionRange;
+	const bool bBlockingHit = GetWorld()->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_WorldDynamic);
+	DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Green, false, 2.0f);
+	if (bBlockingHit)
+	{
+		DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 32.0f, 32, FColor::Green, true, 2.0f);
+		//m_CableComponent->CableLength = Hit.Distance;
+		//m_CableComponent->SetAttachEndToComponent(Hit.GetComponent());
+		//m_CableComponent->EndLocation = Hit.Location;
+		m_GrappleHit = Hit;
+	}
+	else
+	{
+		m_GrappleHit.Reset();
+	}
+}
+
+void ARootSurferCharacter::StopPrimaryAction()
+{
+	m_GrappleHit.Reset();
+	FlushPersistentDebugLines(GetWorld());
 }
 
 void ARootSurferCharacter::SetHasRifle(bool bNewHasRifle)
