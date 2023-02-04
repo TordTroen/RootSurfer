@@ -70,9 +70,6 @@ public:
 	bool GetHasRifle();
 
 	UPROPERTY(EditDefaultsOnly, Category = "Surf")
-	double m_SpeedToFovRatio = 16.f;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Surf")
 	double m_MaxFov = 120.f;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Surf")
@@ -81,6 +78,12 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Surf")
 	double m_FovChangeSpeed = 50.f;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Surf")
+	double m_LateralMovementSpeedModifier = 0.8f;
+
+private:
+	// Divide current speed by this to get the fov we want
+	double m_SpeedToFovRatio = 16.f;
 protected:
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
@@ -89,6 +92,7 @@ protected:
 	void Look(const FInputActionValue& Value);
 
 	void OnPressCrouch();
+	void StopCrouching();
 
 protected:
 	// APawn interface

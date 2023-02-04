@@ -52,6 +52,7 @@ void ARootSurferCharacter::BeginPlay()
 		}
 	}
 
+	m_SpeedToFovRatio = GetMovementComponent()->GetMaxSpeed() / m_MaxFov;
 }
 
 void ARootSurferCharacter::Tick(float DeltaTime)
@@ -79,7 +80,8 @@ void ARootSurferCharacter::SetupPlayerInputComponent(class UInputComponent* Play
 		//Jumping
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
-		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ARootSurferCharacter::OnPressCrouch);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ARootSurferCharacter::OnPressCrouch);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ARootSurferCharacter::StopCrouching);
 
 		//Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ARootSurferCharacter::Move);
@@ -98,7 +100,7 @@ void ARootSurferCharacter::Move(const FInputActionValue& Value)
 	{
 		// add movement 
 		AddMovementInput(GetActorForwardVector(), MovementVector.Y);
-		AddMovementInput(GetActorRightVector(), MovementVector.X);
+		AddMovementInput(GetActorRightVector(), MovementVector.X * m_LateralMovementSpeedModifier);
 	}
 }
 
@@ -115,26 +117,32 @@ void ARootSurferCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
+#pragma optimize("", off)
 void ARootSurferCharacter::OnPressCrouch()
 {
-	USurfMovementComponent* SurfComp = Cast<USurfMovementComponent>(GetCharacterMovement());
-	SurfComp->ToggleCrouch(!bIsCrouched);
-	if (bIsCrouched)
+	auto* CHarMove = GetCharacterMovement();
+	if (USurfMovementComponent* SurfComp = Cast<USurfMovementComponent>(GetCharacterMovement()))
 	{
-		UnCrouch();
-		//FirstPersonCameraComponent->SetFieldOfView(90.0f);
-	}
-	else
-	{
+		//const bool bAlreadyCrouched = bIsCrouched;
+		SurfComp->ToggleCrouch(true);
 		Crouch();
-		//FirstPersonCameraComponent->SetFieldOfView(120.0f);
-		//CharacterMovement->GroundFriction = 0.1f;
+	}
+}
+#pragma optimize("", on)
+
+void ARootSurferCharacter::StopCrouching()
+{
+	if (USurfMovementComponent* SurfComp = Cast<USurfMovementComponent>(GetCharacterMovement()))
+	{
+		SurfComp->ToggleCrouch(false);
+		UnCrouch();
 	}
 }
 
 void ARootSurferCharacter::Jump()
 {
 	Super::Jump();
+	//UE_LOG(LogTemp, Display, TEXT("Jump!!"));
 	UnCrouch();
 }
 
