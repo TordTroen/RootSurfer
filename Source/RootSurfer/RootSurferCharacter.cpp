@@ -9,6 +9,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "SurfMovementComponent.h"
 #include "CableComponent.h"
+#include "Components/SceneComponent.h"
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -37,7 +38,9 @@ ARootSurferCharacter::ARootSurferCharacter()
 	//Mesh1P->SetRelativeRotation(FRotator(0.9f, -19.19f, 5.2f));
 	Mesh1P->SetRelativeLocation(FVector(-30.f, 0.f, -150.f));
 
-	//m_CableComponent = CreateDefaultSubobject<UCableComponent>(TEXT("Grapple"));
+	m_CableComponent = CreateDefaultSubobject<UCableComponent>(TEXT("Grapple"));
+	m_CableComponent->SetVisibility(false);
+	m_CableComponent->SetupAttachment(FirstPersonCameraComponent);
 }
 
 void ARootSurferCharacter::BeginPlay()
@@ -74,6 +77,8 @@ void ARootSurferCharacter::Tick(float DeltaTime)
 		Direction.Normalize();
 		const FVector GrappleForce = Direction * DeltaTime * m_GrappleForce;
 		GetCharacterMovement()->AddForce(GrappleForce);
+
+		UpdateGrapple();
 	}
 }
 
@@ -99,6 +104,19 @@ void ARootSurferCharacter::SetupPlayerInputComponent(class UInputComponent* Play
 		EnhancedInputComponent->BindAction(PrimaryAction, ETriggerEvent::Started, this, &ARootSurferCharacter::DoPrimaryAction);
 		EnhancedInputComponent->BindAction(PrimaryAction, ETriggerEvent::Completed, this, &ARootSurferCharacter::StopPrimaryAction);
 	}
+}
+
+void ARootSurferCharacter::UpdateGrapple()
+{
+	m_CableComponent->EndLocation = m_CableComponent->GetComponentTransform().InverseTransformPosition(m_GrappleHit.ImpactPoint);
+	m_CableComponent->CableLength = m_CableComponent->EndLocation.Length();
+}
+
+void ARootSurferCharacter::StopGrapple()
+{
+	m_GrappleHit.Reset();
+	m_CableComponent->SetVisibility(false);
+	FlushPersistentDebugLines(GetWorld());
 }
 
 void ARootSurferCharacter::Move(const FInputActionValue& Value)
@@ -155,29 +173,30 @@ void ARootSurferCharacter::Jump()
 void ARootSurferCharacter::DoPrimaryAction()
 {
 	FHitResult Hit;
-	const FVector StartOffset = GetFirstPersonCameraComponent()->GetForwardVector() * 80.0f;
+	const FVector StartOffset = GetFirstPersonCameraComponent()->GetForwardVector() * m_TraceStartOffset;
 	const FVector TraceStart = GetFirstPersonCameraComponent()->GetComponentLocation() + StartOffset;
 	const FVector TraceEnd = GetFirstPersonCameraComponent()->GetComponentLocation() + GetFirstPersonCameraComponent()->GetForwardVector() * m_PrimaryActionRange;
 	const bool bBlockingHit = GetWorld()->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_WorldDynamic);
-	DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Green, false, 2.0f);
+	//DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Green, false, 2.0f);
 	if (bBlockingHit)
 	{
 		DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 32.0f, 32, FColor::Green, true, 2.0f);
-		//m_CableComponent->CableLength = Hit.Distance;
-		//m_CableComponent->SetAttachEndToComponent(Hit.GetComponent());
-		//m_CableComponent->EndLocation = Hit.Location;
+
+		UpdateGrapple();
+		
+		// Enable moving to grapple
 		m_GrappleHit = Hit;
+		m_CableComponent->SetVisibility(true);
 	}
 	else
 	{
-		m_GrappleHit.Reset();
+		StopGrapple();
 	}
 }
 
 void ARootSurferCharacter::StopPrimaryAction()
 {
-	m_GrappleHit.Reset();
-	FlushPersistentDebugLines(GetWorld());
+	StopGrapple();
 }
 
 void ARootSurferCharacter::SetHasRifle(bool bNewHasRifle)
