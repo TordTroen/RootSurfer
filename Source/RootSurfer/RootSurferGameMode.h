@@ -27,6 +27,7 @@ public:
 	float m_CurrentScore = 0.0f;
 
 	APlayerController* m_TrackingPlayer = nullptr;
+	ACharacter* m_TrackingChar = nullptr;
 };
 
 
