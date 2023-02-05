@@ -41,6 +41,8 @@ ARootSurferCharacter::ARootSurferCharacter()
 	m_CableComponent = CreateDefaultSubobject<UCableComponent>(TEXT("Grapple"));
 	m_CableComponent->SetVisibility(false);
 	m_CableComponent->SetupAttachment(FirstPersonCameraComponent);
+
+	m_SpeedLevels.Add(1000.0f);
 }
 
 void ARootSurferCharacter::BeginPlay()
@@ -82,7 +84,27 @@ void ARootSurferCharacter::Tick(float DeltaTime)
 		UpdateGrapple();
 	}
 
-	//if (CurCharSpeed)
+	// Speed levels
+	int32 NewSpeedLevel = 0;
+	if (CurCharSpeed <= SMALL_NUMBER)
+	{
+		NewSpeedLevel = 0;
+	}
+	else
+	{
+		for (NewSpeedLevel = 0; NewSpeedLevel < m_SpeedLevels.Num(); NewSpeedLevel++)
+		{
+			if (CurCharSpeed < m_SpeedLevels[NewSpeedLevel])
+			{
+				break;
+			}
+		}
+	}
+	if (NewSpeedLevel != m_SpeedLevel)
+	{
+		m_SpeedLevel = NewSpeedLevel;
+		OnSpeedLevelChange(m_SpeedLevel);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////// Input
@@ -190,7 +212,7 @@ void ARootSurferCharacter::DoPrimaryAction()
 	const FVector TraceStart = GetFirstPersonCameraComponent()->GetComponentLocation() + StartOffset;
 	const FVector TraceEnd = GetFirstPersonCameraComponent()->GetComponentLocation() + GetFirstPersonCameraComponent()->GetForwardVector() * m_PrimaryActionRange;
 	const bool bBlockingHit = GetWorld()->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_WorldDynamic);
-	//DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Green, false, 2.0f);
+	DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Green, true, 2.0f);
 	if (bBlockingHit)
 	{
 		DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 32.0f, 32, FColor::Green, true, 2.0f);
@@ -201,19 +223,19 @@ void ARootSurferCharacter::DoPrimaryAction()
 	{
 		const float Radius = 100.0f;
 		
-		static const FName GrappleSphereTrace(TEXT("Grapple_ForgivingTrace"));
-		FCollisionQueryParams Params(GrappleSphereTrace, false, GetOwner());
-		Params.AddIgnoredActor(GetOwner());
-		const bool bForgivingBlockingHit = GetWorld()->SweepSingleByChannel(Hit, TraceStart, TraceEnd, FQuat::Identity, ECollisionChannel::ECC_WorldStatic, FCollisionShape::MakeSphere(Radius), Params);
-		if (bForgivingBlockingHit)
-		{
-			DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 32.0f, 32, FColor::Red, true, 2.0f);
+		//static const FName GrappleSphereTrace(TEXT("Grapple_ForgivingTrace"));
+		//FCollisionQueryParams Params(GrappleSphereTrace, false, GetOwner());
+		//Params.AddIgnoredActor(GetOwner());
+		//const bool bForgivingBlockingHit = GetWorld()->SweepSingleByChannel(Hit, TraceStart, TraceEnd, FQuat::Identity, ECollisionChannel::ECC_WorldStatic, FCollisionShape::MakeSphere(Radius), Params);
+		//if (bForgivingBlockingHit)
+		//{
+		//	DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 32.0f, 32, FColor::Red, true, 2.0f);
 
-			AttachGrapple(Hit);
-		}
-		else
+		//	AttachGrapple(Hit);
+		//}
+		//else
 		{
-			StopGrapple();
+			//StopGrapple();
 		}
 	}
 }

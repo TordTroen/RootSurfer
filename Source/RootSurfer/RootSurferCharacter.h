@@ -144,9 +144,15 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnJump();
 
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnPrimaryAction();
+
 	int32 m_SpeedLevel = 0;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Surf")
 	TArray<double> m_SpeedLevels;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnSpeedLevelChange(int32 SpeedLevel);
 };
 
