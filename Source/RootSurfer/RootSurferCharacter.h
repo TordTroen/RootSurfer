@@ -104,6 +104,7 @@ private:
 
 	void UpdateGrapple();
 	void StopGrapple();
+	void AttachGrapple(FHitResult Hit);
 protected:
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
@@ -130,5 +131,22 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Surf")
 	class UCableComponent* m_CableComponent;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnGrappleHit(FVector Location);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnBeginSlide();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnLand();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnJump();
+
+	int32 m_SpeedLevel = 0;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Surf")
+	TArray<double> m_SpeedLevels;
 };
 

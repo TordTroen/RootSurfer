@@ -65,7 +65,8 @@ void ARootSurferCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	// Fov changer
-	double TargetFov = FMath::Abs(GetVelocity().Size()) / m_SpeedToFovRatio;
+	const double CurCharSpeed = GetVelocity().Size();
+	double TargetFov = FMath::Abs(CurCharSpeed) / m_SpeedToFovRatio;
 	double NewFov = FMath::Lerp(FirstPersonCameraComponent->FieldOfView, TargetFov, m_FovChangeSpeed);
 	NewFov = FMath::Clamp(NewFov, m_MinFov, m_MaxFov);
 	FirstPersonCameraComponent->SetFieldOfView(NewFov);
@@ -80,6 +81,8 @@ void ARootSurferCharacter::Tick(float DeltaTime)
 
 		UpdateGrapple();
 	}
+
+	//if (CurCharSpeed)
 }
 
 //////////////////////////////////////////////////////////////////////////// Input
@@ -119,6 +122,14 @@ void ARootSurferCharacter::StopGrapple()
 	FlushPersistentDebugLines(GetWorld());
 }
 
+void ARootSurferCharacter::AttachGrapple(FHitResult Hit)
+{
+	UpdateGrapple();
+	m_GrappleHit = Hit;
+	m_CableComponent->SetVisibility(true);
+	OnGrappleHit(m_GrappleHit.ImpactPoint);
+}
+
 void ARootSurferCharacter::Move(const FInputActionValue& Value)
 {
 	// input is a Vector2D
@@ -152,6 +163,7 @@ void ARootSurferCharacter::OnPressCrouch()
 	{
 		SurfComp->ToggleCrouch(true);
 		Crouch();
+		OnBeginSlide();
 	}
 }
 
@@ -168,6 +180,7 @@ void ARootSurferCharacter::Jump()
 {
 	Super::Jump();
 	UnCrouch();
+	OnJump();
 }
 
 void ARootSurferCharacter::DoPrimaryAction()
@@ -182,11 +195,7 @@ void ARootSurferCharacter::DoPrimaryAction()
 	{
 		DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 32.0f, 32, FColor::Green, true, 2.0f);
 
-		UpdateGrapple();
-		
-		// Enable moving to grapple
-		m_GrappleHit = Hit;
-		m_CableComponent->SetVisibility(true);
+		AttachGrapple(Hit);
 	}
 	else
 	{
@@ -200,10 +209,7 @@ void ARootSurferCharacter::DoPrimaryAction()
 		{
 			DrawDebugSphere(GetWorld(), Hit.ImpactPoint, 32.0f, 32, FColor::Red, true, 2.0f);
 
-			UpdateGrapple();
-
-			m_GrappleHit = Hit;
-			m_CableComponent->SetVisibility(true);
+			AttachGrapple(Hit);
 		}
 		else
 		{
