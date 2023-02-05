@@ -26,9 +26,16 @@ void ARootSurferGameMode::Tick(float DeltaTime)
 {
 	if (m_TrackingPlayer != nullptr)
 	{
-		ARootSurferCharacter* Character = Cast<ARootSurferCharacter>(m_TrackingPlayer->GetCharacter());
+		//* Character = Cast<ARootSurferCharacter>(m_TrackingPlayer->GetCharacter()))
+		//if (m_TrackingChar == nullptr)
+		//{
+		//	m_TrackingChar = m_TrackingChar->GetChara
+		//}
 		//m_CurrentScore += m_ScorePerSecond * DeltaTime;
-		const float Speed = Character->GetVelocity().Length();
-		m_CurrentScore += Speed * m_ScoreSpeedModifier * DeltaTime;
+		if (ACharacter* Character = m_TrackingPlayer->GetCharacter())
+		{
+			const float Speed = Character->GetVelocity().Length();
+			m_CurrentScore += Speed * m_ScoreSpeedModifier * DeltaTime;
+		}
 	}
 }
