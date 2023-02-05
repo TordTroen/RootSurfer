@@ -79,5 +79,3 @@ enc_temp_folder/*
 # Rider stuff
 .idea/*
 Plugins/Developer/RiderLink/*
-
-Release/*
